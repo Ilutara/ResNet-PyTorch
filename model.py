@@ -22,30 +22,35 @@ __all__ = [
     "resnet18",
 ]
 
-
-class _BasicBlock(nn.Module):
+class BasicBlock(nn.Module):
     expansion: int = 1
 
     def __init__(
-            self,
-            in_channels: int,
-            out_channels: int,
-            stride: int,
-            downsample: Optional[nn.Module] = None,
-            groups: int = 1,
-            base_channels: int = 64,
+        self,
+        inplanes: int,
+        planes: int,
+        stride: int = 1,
+        downsample: Optional[nn.Module] = None,
+        groups: int = 1,
+        base_width: int = 64,
+        dilation: int = 1,
+        norm_layer: Optional[Callable[..., nn.Module]] = None,
     ) -> None:
-        super(_BasicBlock, self).__init__()
-        self.stride = stride
+        super().__init__()
+        if norm_layer is None:
+            norm_layer = nn.BatchNorm2d
+        if groups != 1 or base_width != 64:
+            raise ValueError("BasicBlock only supports groups=1 and base_width=64")
+        if dilation > 1:
+            raise NotImplementedError("Dilation > 1 not supported in BasicBlock")
+        # Both self.conv1 and self.downsample layers downsample the input when stride != 1
+        self.conv1 = conv3x3(inplanes, planes, stride)
+        self.bn1 = norm_layer(planes)
+        self.relu = nn.ReLU(inplace=True)
+        self.conv2 = conv3x3(planes, planes)
+        self.bn2 = norm_layer(planes)
         self.downsample = downsample
-        self.groups = groups
-        self.base_channels = base_channels
-
-        self.conv1 = nn.Conv2d(in_channels, out_channels, (3, 3), (stride, stride), (1, 1), bias=False)
-        self.bn1 = nn.BatchNorm2d(out_channels)
-        self.relu = nn.ReLU(True)
-        self.conv2 = nn.Conv2d(out_channels, out_channels, (3, 3), (1, 1), (1, 1), bias=False)
-        self.bn2 = nn.BatchNorm2d(out_channels)
+        self.stride = stride
 
     def forward(self, x: Tensor) -> Tensor:
         identity = x
@@ -60,7 +65,7 @@ class _BasicBlock(nn.Module):
         if self.downsample is not None:
             identity = self.downsample(x)
 
-        out = torch.add(out, identity)
+        out += identity
         out = self.relu(out)
 
         return out

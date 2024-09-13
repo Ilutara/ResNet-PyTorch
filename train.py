@@ -120,7 +120,7 @@ def main():
                         is_last)
 
 
-def load_dataset() -> [CUDAPrefetcher, CUDAPrefetcher]:
+def load_dataset() -> list[CUDAPrefetcher, CUDAPrefetcher]:
     # Load train, test and valid datasets
     train_dataset = ImageDataset(config.train_image_dir,
                                  config.image_size,
@@ -156,7 +156,7 @@ def load_dataset() -> [CUDAPrefetcher, CUDAPrefetcher]:
     return train_prefetcher, valid_prefetcher
 
 
-def build_model() -> [nn.Module, nn.Module]:
+def build_model() -> list[nn.Module, nn.Module]:
     resnet_model = model.__dict__[config.model_arch_name](num_classes=config.model_num_classes)
     resnet_model = resnet_model.to(device=config.device, memory_format=torch.channels_last)
 
